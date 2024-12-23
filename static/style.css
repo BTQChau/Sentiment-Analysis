@@ -1,0 +1,113 @@
+.contain-1{
+    background-color: #e4e4e4;
+}
+.contain-2{
+    display: flex;
+    margin: 20px;
+    gap: 15px;
+    height: 600px;
+}
+.col-1{
+    width: 35%;
+    height:70%;
+    display: flex;
+    justify-content: center;
+
+}
+.col-2{
+    width: 65%;
+    height: 100%;
+
+}
+.block-2{
+    gap: 10px;
+    display: flex;
+    height: 20%;
+    gap: 10;
+    margin-right: 15px;
+    margin-bottom: 15px;
+
+}
+.block-3{
+    height: 70%;
+    margin-right: 15px;
+    border-radius: 8px;
+}
+.card {
+    padding: 16px 20px
+}
+.card-1{
+    justify-content: center;
+    flex: 1;
+}
+.card-2{
+    justify-content: center;
+    flex: 1;
+}
+.card-3{
+    justify-content: center;
+    flex: 1;
+}
+.input {
+    width: 360px;
+}
+.button {
+    padding: 4px 20px;
+    margin-bottom: 5px;
+}
+.emoji {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+}
+.background {
+    background-color: #f9f9f9;
+}
+.contain-1 h3 {
+    padding: 12px 28px;
+}
+.comment {
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+}
+.res {
+    margin-top: 80px;
+}
+.ratings {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 10px;
+}
+.ratings span {
+    background-color: #ea471e;
+    padding: 8px 20px;
+    color: white;
+}
+.input-box {
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    gap: 10px;
+}
+.emotion-bar {
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+.bar-item {
+    margin-top: 26px;
+    width: 82px;
+    height: 16px;
+}
+.arrow {
+    position: absolute;
+    top: 4px; /* Đặt vị trí mũi tên lên trên thanh */
+    left: 15%; /* Canh giữa theo chiều ngang */
+    transform: translateX(-50%); /* Cân chỉnh chính xác ở giữa */
+}
+.form-area {
+    display: flex;
+    flex-direction: column;
+}
