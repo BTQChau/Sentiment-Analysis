@@ -9,11 +9,16 @@ Dự án phân tích cảm xúc từ văn bản, sử dụng Python và các th�
    python -m venv venv
    
 2. Kích hoạt môi trường ảo:
+```cmd
 Windows: venv\Scripts\activate
+
+```cmd
 MacOS/Linux: source venv/bin/activate
 
-3. Cài đặt thư viện:
+4. Cài đặt thư viện:
+```cmd
 pip install -r requirements.txt
 
-4. Chạy dự án
+5. Chạy dự án
+```cmd
 python app.py
