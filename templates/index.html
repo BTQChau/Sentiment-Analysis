@@ -36,9 +36,10 @@
                 <div class="col-1 card">
                     <div class="block-1">
                         <div class="input-box">
+                            <!-- thẻ form dùng để tạo yêu cầu gửi tới server -->
                             <form action="/analysis" method="post">
-                                <input id="comment" name="comment" value="{{ comment if comment else '' }}" placeholder="Nhập văn bản" class="input"> 
-                                <button type="submit" class="btn btn-outline-primary btn-sm button">Submit</button>
+                                <input id="comment" name="comment" value="{{ comment if comment else '' }}" placeholder="Nhập văn bản" class="input">  <!-- dùng framework flask để lấy comment -->
+                                <button type="submit" class="btn btn-outline-primary btn-sm button">Submit</button> <!-- Nhấn submit để gửi request -->
                             </form>
                         </div>
                         <div>

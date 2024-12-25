@@ -33,8 +33,7 @@ def view_details():
     plot_pie_and_tfidf_bars(top_words_by_rating, df_tfidf, data_path)
 
     print("message", message)
-    return render_template("dashboard.html"
-                           )
+    return render_template("dashboard.html")
 
 @app.route('/analysis', methods=['POST'])
 def analysis():
