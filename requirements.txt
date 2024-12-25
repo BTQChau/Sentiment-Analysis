@@ -1,2 +1,10 @@
 flask
 tensorflow==2.13.0
+nltk 
+matplotlib 
+pandas 
+numpy 
+pyvi 
+emoji 
+scikit-learn 
+seaborn

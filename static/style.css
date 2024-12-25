@@ -1,23 +1,27 @@
-.contain-1{
-    background-color: #e4e4e4;
+.content {
+    margin-bottom: 20px;
+}
+.contain-1 {
+    display: flex;
+    justify-content: center;
 }
 .contain-2{
     display: flex;
-    margin: 20px;
-    gap: 15px;
-    height: 600px;
+    justify-content: center;
+    align-items: center;
+    margin: 0 20px;
+    height: 550px;
 }
 .col-1{
-    width: 35%;
-    height:70%;
+    width: 60%;
+    height: 90%;
     display: flex;
     justify-content: center;
 
 }
 .col-2{
-    width: 65%;
     height: 100%;
-
+    width: 80%;
 }
 .block-2{
     gap: 10px;
@@ -29,12 +33,13 @@
 
 }
 .block-3{
-    height: 70%;
-    margin-right: 15px;
+    height: fit-content;
     border-radius: 8px;
+    position: relative;
 }
 .card {
-    padding: 16px 20px
+    padding: 16px 20px;
+    border-radius: 16px;
 }
 .card-1{
     justify-content: center;
@@ -59,9 +64,6 @@
     margin-top: 40px;
     display: flex;
     justify-content: center;
-}
-.background {
-    background-color: #f9f9f9;
 }
 .contain-1 h3 {
     padding: 12px 28px;
@@ -104,10 +106,42 @@
 .arrow {
     position: absolute;
     top: 4px; /* Đặt vị trí mũi tên lên trên thanh */
-    left: 15%; /* Canh giữa theo chiều ngang */
+    left: 31%; /* Canh giữa theo chiều ngang */
     transform: translateX(-50%); /* Cân chỉnh chính xác ở giữa */
 }
 .form-area {
     display: flex;
     flex-direction: column;
+}
+.hidden {
+    display: none;
+}
+.block {
+    display: block;
+}
+.chart-container {
+    height: 400px;
+    display: flex;
+    justify-content: center;
+    margin: 0 auto;
+    width: 100%;
+    margin-top: 50px;
+}
+#sentimentChart {
+    height: 400px !important;
+}
+.container {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+body {
+    background-color: #f9f9e5;
+}
+.view-detail {
+    display: flex;
+    justify-content: end;
+}
+.view-btn {
+    width: fit-content;
 }
