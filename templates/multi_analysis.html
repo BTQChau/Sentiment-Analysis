@@ -148,12 +148,19 @@
                 return;
             }
 
-            // Chuyển hướng tới /view-detail với dữ liệu trong query string
-            const url = new URL('/view-details', window.location.origin);
-            url.searchParams.append('message', message);
+            // Chuyển hướng đến /view-details với giá trị message
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = "/view-details";
 
-            // Chuyển hướng
-            window.location.href = url.toString();
+            const hiddenField = document.createElement("input");
+            hiddenField.type = "hidden";
+            hiddenField.name = "message";
+            hiddenField.value = message;
+
+            form.appendChild(hiddenField);
+            document.body.appendChild(form);
+            form.submit();
         }
     </script>
 </body>

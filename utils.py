@@ -70,11 +70,11 @@ def stopword_and_tokenize_text(text, stopwords_path):
     # Tách từ 
     text = ViTokenizer.tokenize(text)
 
-    # Loại bỏ stopwords
-    if stopwords_path:
-        with open(f'{stopwords_path}/vietnamese-stopwords.txt', "r", encoding="utf-8") as f:
-            stopwords = set(word.strip() for word in f.readlines())
-        text = " ".join(word for word in text.split() if word not in stopwords)
+    # # Loại bỏ stopwords
+    # if stopwords_path:
+    #     with open(f'{stopwords_path}/vietnamese-stopwords.txt', "r", encoding="utf-8") as f:
+    #         stopwords = set(word.strip() for word in f.readlines())
+    #     text = " ".join(word for word in text.split() if word not in stopwords)
 
     return text
 
@@ -338,7 +338,7 @@ def process_input_texts(input_texts, model, tokenizer, max_length, data_path):
 
 
 # Kỹ thuật TF-IDF
-def extract_top_tfidf_words_per_rating(dataset, num_words):
+def extract_top_tfidf_words_per_rating(dataset, num_words=10):
     # Tạo TF-IDF vectorizer
     tfidf_vectorizer = TfidfVectorizer(ngram_range=(2,2),max_features=5000)  # Giới hạn số từ đặc trưng
     

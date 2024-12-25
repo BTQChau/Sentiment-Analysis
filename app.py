@@ -21,15 +21,15 @@ def single():
 def multiple():
     return render_template("multi_analysis.html")
 
-@app.route("/view-details")
+@app.route("/view-details", methods=["POST"])
 def view_details():
      # Lấy dữ liệu từ query string
     max_length = 60
-    message = request.args.get("message", "")
+    message = request.form.get("message", "")
     list_texts = process_input_texts(message, model, tokenizer, max_length, data_path)
     
     df_tfidf = pd.DataFrame(list_texts)
-    top_words_by_rating = extract_top_tfidf_words_per_rating(df_tfidf, num_words=15)
+    top_words_by_rating = extract_top_tfidf_words_per_rating(df_tfidf, num_words=10)
     plot_pie_and_tfidf_bars(top_words_by_rating, df_tfidf, data_path)
 
     print("message", message)
