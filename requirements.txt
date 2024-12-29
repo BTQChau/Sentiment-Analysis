@@ -8,3 +8,7 @@ pyvi
 emoji 
 scikit-learn 
 seaborn
+torch 
+torchvision 
+torchaudio
+Unidecode

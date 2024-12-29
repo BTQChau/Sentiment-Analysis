@@ -1,119 +1,147 @@
 import re
-import nltk
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import json
 from pyvi import ViTokenizer  
-import emoji
-from sklearn.feature_extraction.text import TfidfVectorizer
-import pickle
+
 import os 
+import pickle
+import json
 from tensorflow.keras.models import model_from_json
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from matplotlib.lines import Line2D
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.gridspec import GridSpec
-
-
-# Set NumPy print options
-np.set_printoptions(precision=2, linewidth=80)
 import seaborn as sns
 
+import sys
 
-nltk.download('punkt')
-nltk.download("stopwords")
-nltk.download('punkt_tab')
+# Sử dụng os.getcwd() để lấy thư mục gốc của dự án
+sys.path.append(os.path.join(os.getcwd(), 'correct_word_model'))
+
+from correct_word_model.tool.predictor import Predictor
+
+# Lấy ra mô hình sửa lỗi chính tả của buiquangmanhhp1999 trong bài VietnameseOcrCorrection
+model_predictor = Predictor(device='cpu', model_type=r'seq2seq', weight_path=r'correct_word_model/weights/seq2seq_0.pth')
 
 # Định nghĩa thư mục lưu trữ
 data_path = r'./models'
 
-def lay_file_sua_du_lieu(dia_chi_luu_file_sua_chinh_ta):
-    loaded_dict_list = []
-    file_names = ['sua_viet_tat','sua_chinh_ta','dich_tieng_anh']
-    
-    for file_name in file_names:
-        with open(f'{dia_chi_luu_file_sua_chinh_ta}/{file_name}.json', "r", encoding="utf-8") as file:
-            loaded_dict = json.load(file)
-            loaded_dict_list.append(loaded_dict) 
-               
-    return loaded_dict_list
+# Hàm đọc các file dictionary để sửa nội dung văn bản
+def doc_dictionary(data_path,file_name):
+    # Đọc file JSON
+    with open(f"{data_path}/{file_name}.json", "r", encoding="utf-8") as file:
+        data = json.load(file)
 
+    return data
 
 def normalize_acronyms(text, replace_list):
     for k, v in replace_list.items():
         text = text.replace(k, v)
     return text
 
-
 # Hàm tiền xử lý văn bản
-def preprocess_normalize_text(text, dia_chi_luu_file_sua_chinh_ta):
-    text = str(text)  # Đảm bảo đầu vào là chuỗi
-    text = text.lower()  # Chuyển về chữ thường
-    text = re.sub(r"(.)\1{2,}", r"\1", text) # Loại bỏ ký tự kéo dài 2 lần trở lên
-    text = re.sub(r"\d+", "", text)  # Xóa số
-    text = re.sub(r"[^\w\s\u00C0-\u1FFF\u2C00-\uD7FF]", " ", text) # Loại bỏ các ký tự đặc biệt
-    text = ' ' + text + ' '  # Thêm khoảng trắng vào đầu và cuối text
-    
-    replace_list = lay_file_sua_du_lieu(dia_chi_luu_file_sua_chinh_ta)
-    for list in replace_list:
-        text = normalize_acronyms(text, list)  # Chuẩn hóa từ viết tắt
+def remove_non_mean_word(text):
+    sentences = []
+    non_mean_words = []
+    texts = text.split(' ')
+    for text in texts:
+        if len(text) < 8:  # Ví dụ, nếu chuỗi có độ dài nhỏ hơn 8 thì có thể bỏ qua
+            sentences.append(text)
+        else:
+            non_mean_words.append(text)
+    text = ' '.join(sentences)
     
     return text
 
+# Hàm tiền xử lý văn bản
+def preprocess_text(text, data_path):
+    text = str(text)
+    
+    # Chuyển thành chữ thường
+    text = text.lower()
 
-def stopword_and_tokenize_text(text, stopwords_path):
-    # # Xử lý biểu tượng cảm xúc
-    # text = emoji.demojize(text)
-    # text = re.sub(r":\w*:", lambda match: "positive" if "smile" in match.group() or "heart" in match.group() else "negative", text)
+    # Loại bỏ ký tự kéo dài 3 lần trở lên
+    text = re.sub(r"(.)\1{2,}", r"\1", text)
+
+    # Loại bỏ URL
+    text = re.sub(r"http\S+|www\S+|https\S+", "", text)
+
+    # Xóa số
+    text = re.sub(r"\d+", "", text)  
+    
+    # Xóa bỏ ký tự đặc biệt
+    special_characters = [':', ',', '.', "'", '"', '!', '?', '-', '_', '(', ')', '[', ']', '{', '}', '&', '@', '#', '$', '%', '^', '*', '+', '=', '|', '\\', '/', '<', '>', '~', '`', '‘', '’', '“', '”', '•', '…', ';', '؛']
+
+    pattern = f"[{re.escape(''.join(special_characters))}]"
+    
+    # Thay thế tất cả các ký tự đặc biệt bằng khoảng trắng
+    text = re.sub(pattern, ' ', text)
+
+    # Xóa khoảng trắng thừa
+    text = re.sub(r"\s+", " ", text).strip()
+    
+    # Thêm khoảng trắng vào đầu và cuối text
+    text = ' ' + text + ' '  
+    
+    # Chuẩn hóa từ sai chính tả
+    file_names = ['sua_viet_tat','sua_chinh_ta','dich_tieng_anh']
+    for file_name in file_names:
+        text = normalize_acronyms(text, doc_dictionary(data_path,file_name))  
+    
+    # Xóa các ký tự không có ý nghĩa với điều kiện dài hơn 7 kí tự
+    text = remove_non_mean_word(text)
+    
+    # Loại bỏ ký tự kéo dài 2 lần trở lên
+    text = re.sub(r"(.)\1{1,}", r"\1", text)    
+    
+    # Chuẩn hóa các từ sai chính tả bằng model
+    try:
+        text = model_predictor.predict(text)
+    except (KeyError, ValueError):
+        pass
+
+    # Thay thế các icon và emoji thành từ miêu tả nó
+    emoji_list = ['UNICODE_EMO_VI', 'EMOTICONS_VI']    
+    for emoji in emoji_list:
+        dict_emoji = doc_dictionary(data_path, emoji)
+        for emoji, description in dict_emoji.items():
+            text = text.replace(emoji, description)
+    
+    # Chuyển thành chữ thường        
+    text = text.lower()
+    
+    # Xóa bỏ ký tự đặc biệt    
+    special_characters = [':', ',', '.', "'", '"', '!', '?', '-', '_', '(', ')', '[', ']', '{', '}', '&', '@', '#', '$', '%', '^', '*', '+', '=', '|', '\\', '/', '<', '>', '~', '`', '‘', '’', '“', '”', '•', '…', ';', '؛']
+    pattern = f"[{re.escape(''.join(special_characters))}]"
+    
+    # Thay thế tất cả các ký tự đặc biệt bằng khoảng trắng
+    text = re.sub(pattern, ' ', text)
 
     # Tách từ 
     text = ViTokenizer.tokenize(text)
-
-    # # Loại bỏ stopwords
-    # if stopwords_path:
-    #     with open(f'{stopwords_path}/vietnamese-stopwords.txt', "r", encoding="utf-8") as f:
-    #         stopwords = set(word.strip() for word in f.readlines())
-    #     text = " ".join(word for word in text.split() if word not in stopwords)
-
+    
     return text
 
-
 def tao_mo_hinh(data_path):
-    # Hàm để lấy đường dẫn file theo tên
-    def get_file_by_name(directory, filename):
-        file_path = os.path.join(directory, filename)
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Không tìm thấy file '{filename}' trong thư mục '{directory}'")
-        return file_path
-
     # Đọc cấu trúc mô hình từ file JSON
-    json_path = get_file_by_name(data_path, "model_structure.json")
-    with open(json_path, "r") as json_file:
+    with open(f'{data_path}/model_structure.json', "r") as json_file:
         model_json = json_file.read()
 
     # Tạo mô hình từ cấu trúc JSON
     model = model_from_json(model_json)
 
-    print("Cấu trúc model đã được tải thành công!")
-
     # Đọc trọng số mô hình từ file pickle
-    weights_path = get_file_by_name(data_path, "model_weights.pkl")
-    with open(weights_path, "rb") as weights_file:
+    with open(f'{data_path}/model_weights.pkl', "rb") as weights_file:
         model.set_weights(pickle.load(weights_file))
-        
-    print("Trọng số model đã được tải thành công!")
 
     # Tải tokenizer từ file
-    tokenizer_path = get_file_by_name(data_path, "tokenizer.pkl")
-    with open(tokenizer_path, "rb") as f:
+    with open(f'{data_path}/tokenizer.pkl', "rb") as f:
         tokenizer = pickle.load(f)
 
-    print("Tokenizer đã được tải thành công!")
     max_length = 60
     return model, tokenizer, max_length
-
-
 
 def predict_sentiment(model, tokenizer, input_texts, max_length):
     """
@@ -278,35 +306,8 @@ def predict_sentiment_multi(model, tokenizer, input_text, max_length):
 
     return res
 
-
-
-
 model, tokenizer, max_length = tao_mo_hinh(data_path)
 
-
-
-# input_texts = [
-#     "Dịch vụ rất tốt, tôi sẽ quay lại lần sau!",
-#     "Sản phẩm này không được như mong đợi.",
-#     "Chất lượng tuyệt vời, tôi rất hài lòng!",
-#     "Giao hàng chậm và dịch vụ kém.",
-#     "Tôi sẽ không mua sản phẩm này nữa."
-# ]
-# label_result_list = []
-# percent_result_list = []
-# list_text = []
-# for text in input_texts:
-#     text = preprocess_normalize_text(text, data_path)
-#     text = stopword_and_tokenize_text(text, data_path)
-#     label_result, percent_result, so_sao = predict_sentiment(model, tokenizer, text, max_length)
-#     print(f'Có {percent_result} là {label_result} cho câu: {text}')
-#     list_text.append({
-#         'Bình luận': text,
-#         'Số sao': so_sao,
-#         'Nhãn': label_result        
-#     })
-#     label_result_list.append(label_result)
-#     percent_result_list.append(percent_result)
 
 def process_input_texts(input_texts, model, tokenizer, max_length, data_path):
     # Khởi tạo danh sách để lưu kết quả
@@ -315,10 +316,7 @@ def process_input_texts(input_texts, model, tokenizer, max_length, data_path):
     # Lặp qua từng câu trong input_texts (chia cách bởi dòng mới)
     for text in input_texts.splitlines():  # Split text vào các dòng riêng biệt
         # Tiền xử lý và chuẩn hóa văn bản
-        text = preprocess_normalize_text(text, data_path)
-        
-        # Loại bỏ stopword và tokenize
-        text = stopword_and_tokenize_text(text, data_path)
+        text = preprocess_text(text, data_path)
         
         # Dự đoán nhãn cảm xúc và tỉ lệ phần trăm
         label_result, percent_result, so_sao = predict_sentiment(model, tokenizer, text, max_length)
@@ -340,7 +338,7 @@ def process_input_texts(input_texts, model, tokenizer, max_length, data_path):
 # Kỹ thuật TF-IDF
 def extract_top_tfidf_words_per_rating(dataset, num_words=10):
     # Tạo TF-IDF vectorizer
-    tfidf_vectorizer = TfidfVectorizer(ngram_range=(2,2),max_features=5000)  # Giới hạn số từ đặc trưng
+    tfidf_vectorizer = TfidfVectorizer(ngram_range=(2,2),max_features=5000, stop_words=None)  # Giới hạn số từ đặc trưng
     
     # Lưu từ khóa phổ biến nhất theo từng loại sao
     top_words_by_rating = {}
@@ -380,13 +378,19 @@ def plot_pie_and_tfidf_bars(top_words_by_rating, dataset, data_path):
         "Tích cực": "#eb885f",      # Màu xanh lá nhạt
         "Rất tích cực": "#6dd94a"   # Màu xanh lá đậm
     }
+    # Đếm tần suất của các đánh giá (số sao)
     rating_counts = dataset['Số sao'].value_counts().sort_index()
-    sentiment_counts = [rating_counts.get(rating, 0) for rating in sorted(sentiment_labels.keys())]
+    
+    # Lọc các mức đánh giá thực tế có trong dữ liệu
+    filtered_sentiment_labels = {k: sentiment_labels[k] for k in rating_counts.index}
+    
+    # Lấy số lượng đánh giá cho từng cảm xúc
+    sentiment_counts = [rating_counts.get(rating, 0) for rating in sorted(filtered_sentiment_labels.keys())]
 
     # Tạo nhãn với tổng số bình luận
     labels_with_counts = [
-        f"{sentiment_labels[rating]}"#\n ({rating_counts.get(rating, 0)} bình luận)"
-        for rating in sorted(sentiment_labels.keys())
+        f"{filtered_sentiment_labels[rating]}"#\n ({rating_counts.get(rating, 0)} bình luận)"
+        for rating in sorted(filtered_sentiment_labels.keys())
     ]
     # Giả sử dataset là DataFrame của bạn
     num_charts = len(dataset['Số sao'].unique()) + 1
@@ -401,9 +405,12 @@ def plot_pie_and_tfidf_bars(top_words_by_rating, dataset, data_path):
     elif num_charts in [5, 6]:
         ncols, nrows = 3, 2  # 5 hoặc 6 biểu đồ: 3 cột, 2 hàng
     fig = plt.figure(figsize = (20, 12))
-    gs = GridSpec(nrows = nrows + 1, ncols = ncols, figure = fig, height_ratios = [0.28, 2, 2])    
-    # axes = axes.flatten()
-    j = 0 
+    
+    if num_charts in [4, 5, 6]:
+        gs = GridSpec(nrows = nrows + 1, ncols = ncols, figure = fig, height_ratios = [0.28, 2, 2])  
+    else:
+        gs = GridSpec(nrows = nrows + 1, ncols = ncols, figure = fig, height_ratios = [0.28, 4])    
+
     axes = []
     if num_charts == 5:
         axes = [fig.add_subplot(gs[3]), 
@@ -413,7 +420,7 @@ def plot_pie_and_tfidf_bars(top_words_by_rating, dataset, data_path):
         fig.add_subplot(gs[8])]
     else:
         for i in range(ncols * nrows):
-            axes.append(fig.add_subplot(gs[i + j + ncols]))
+            axes.append(fig.add_subplot(gs[i + ncols]))
 
 
     axs = fig.add_subplot(gs[0:ncols])
@@ -423,9 +430,11 @@ def plot_pie_and_tfidf_bars(top_words_by_rating, dataset, data_path):
     axs.text(0.5, 0.5, str(f'DASHBOARD PHÂN TÍCH CẢM XÚC BÌNH LUẬN KHÁCH HÀNG'), fontsize=20, ha='center', va='center')
     axs.add_patch(plt.Rectangle((0, 0.2), 1, 0.7, fill=None, edgecolor='black', linewidth=2))
 
-    # Tạo gradient màu từ các màu đã định nghĩa
-    colors = [sentiment_colors[label] for label in sentiment_colors]
-    cmap = LinearSegmentedColormap.from_list("sentiment_gradient", colors)
+    # Lấy màu từ sentiment_colors theo từng nhãn
+    colors_for_pie = [
+        sentiment_colors[filtered_sentiment_labels[rating]]
+        for rating in sorted(filtered_sentiment_labels.keys())
+    ]
     
     # Hàm format cho biểu đồ tròn
     def autopct_func(pct, allvals):
@@ -438,11 +447,9 @@ def plot_pie_and_tfidf_bars(top_words_by_rating, dataset, data_path):
     axes[0].pie(
         sentiment_counts,
         labels=labels_with_counts,
-        colors=cmap(np.linspace(0, 1, len(sentiment_counts))),
+        colors=colors_for_pie,  # Sử dụng màu trực tiếp từ sentiment_colors
         autopct=lambda pct: autopct_func(pct, sentiment_counts),
-        #labeldistance=1.5,  # Đưa nhãn ra xa hơn một chút
         startangle=90,
-        #pctdistance=0.65
     )
     axes[0].set_title("Tỉ lệ số lượng đánh giá theo cảm xúc", fontsize=16)
     # axes[0].axis('off')
@@ -477,7 +484,7 @@ def plot_pie_and_tfidf_bars(top_words_by_rating, dataset, data_path):
                     y='word',
                     palette=gradient_palette(np.linspace(1, 0.4, len(words))),  # Dùng gradient từ 0.3 đến 1 để tránh quá tối
                     ax=axes[ax_index],
-                    orient='h'
+                    orient='h',
                 )
                 axes[ax_index].set_title(
                     f"Đánh giá {sentiment_labels[rating]}",

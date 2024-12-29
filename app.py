@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request
 from utils import predict_sentiment, model, tokenizer, predict_sentiment_multi, extract_top_tfidf_words_per_rating, plot_pie_and_tfidf_bars, data_path, process_input_texts
-import json
 import pandas as pd
 
 app = Flask(__name__)

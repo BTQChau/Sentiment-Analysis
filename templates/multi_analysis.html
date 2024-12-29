@@ -53,10 +53,15 @@
                         </div>
                     </div>
                     <div class="block-3 card">
-                        <form action="/analysis-multi" method="post" class="form-area">
+                        <form action="/analysis-multi" method="post" class="form-area" onsubmit="return validateTextarea()">
                             <!-- Thêm label để mô tả cho người dùng -->
                             <label for="message" class="mb-2">Vui lòng nhập các văn bản:</label>
                             <textarea id="message" name="message" rows="5" cols="60" placeholder="Write your message here" required>{{ message }}</textarea>
+                            
+                            <!-- Hiển thị thông báo lỗi nếu cần -->
+                            <div id="error-message" style="color: red; font-size: 0.9em; margin-top: 5px; display: none;">
+                                Vui lòng nhập ít nhất một câu có trên 2 từ.
+                            </div>
                             
                             <!-- Nút gửi -->
                             <button type="submit" class="btn btn-outline-primary btn-sm button mt-2">Submit</button>
@@ -68,7 +73,7 @@
                         </div>
 
                         <div class="view-detail">
-                            <button type="button" onclick="redirectToReport()" class="view-btn btn btn-outline-primary btn-sm button mt-2 {{ "block" if isHidden else "hidden" }}">View details</button>
+                            <button type="button" id="view-detail-btn" onclick="redirectToReport()" class="view-btn btn btn-outline-primary btn-sm button mt-2 {{ "block" if isHidden else "hidden" }}">View details</button>
                         </div>
                     </div>
                 </div>
@@ -82,6 +87,38 @@
 
         // Chuyển đổi chuỗi JSON thành đối tượng JSON
         const dataCounts = JSON.parse(dataCountsStr);
+
+        function validateTextarea() {
+            // Lấy giá trị từ textarea
+            const textarea = document.getElementById("message").value.trim();
+            const errorMessage = document.getElementById("error-message");
+            const viewDetailBtn = document.getElementById("view-detail-btn");
+            const chart = document.getElementById("chartContainer");
+
+
+            // Tách nội dung thành các dòng
+            const lines = textarea.split(/\n/).filter(line => line.trim().length > 0);
+
+            // Kiểm tra từng dòng
+            for (const line of lines) {
+                // Tách từ trong dòng và đếm số lượng
+                const words = line.trim().split(/\s+/);
+                if (words.length < 2) {
+                    // Hiển thị thông báo lỗi nếu có dòng không đủ từ
+                    errorMessage.style.display = "block";
+                    viewDetailBtn.style.display = "none";
+                    chart.style.display = "none";
+                    isHidden = 0
+                    return false;
+                }
+            }
+
+            // Ẩn thông báo lỗi nếu hợp lệ
+            errorMessage.style.display = "none";
+            chart.style.display = "block";
+            viewDetailBtn.style.display = "block";
+            return true;
+        }
 
         if (dataCounts) {
             // Dữ liệu biểu đồ (thay đổi dựa trên kết quả từ server)
